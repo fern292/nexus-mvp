@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  wallets       Wallet[]
+  alerts        Alert[]
+  snapshots     PortfolioSnapshot[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  chainId   Int      @default(1)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assets     Asset[]
+
+  @@index([userId])
+  @@index([address])
+}
+
+model Asset {
+  id          String   @id @default(cuid())
+  tokenId     String?
+  contract    String
+  name        String?
+  symbol      String?
+  decimals    Int      @default(18)
+  balance     String   @default("0")
+  type        AssetType @default(TOKEN)
+  chainId     Int      @default(1)
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  metadata    Json?
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([walletId])
+  @@index([contract])
+  @@index([type])
+}
+
+enum AssetType {
+  TOKEN
+  NFT
+}
+
+model Alert {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      AlertType
+  condition Json
+  isActive  Boolean     @default(true)
+  triggeredAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([type])
+}
+
+enum AlertType {
+  PRICE_ABOVE
+  PRICE_BELOW
+  BALANCE_CHANGE
+  NFT_LISTED
+  NFT_SOLD
+}
+
+model PortfolioSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalUsd  String
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
