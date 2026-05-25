@@ -1,32 +1,45 @@
 "use client";
 
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useAccount, useSignMessage, useConnect, useDisconnect } from "wagmi";
-import { injected } from "wagmi/connectors";
 import { SiweMessage } from "siwe";
 import { useCallback, useState } from "react";
 
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      on: (event: string, handler: (...args: unknown[]) => void) => void;
+      removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
+      isMetaMask?: boolean;
+    };
+  }
+}
+
 export function WalletButton() {
-  const { data: session } = useSession();
-  const { address, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
-  const { connect } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { data: session, status } = useSession();
+  const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = useCallback(async () => {
+    if (!window.ethereum) {
+      alert("Please install MetaMask or another Ethereum wallet");
+      return;
+    }
+
     try {
       setLoading(true);
-      if (!isConnected) {
-        await connect({ connector: injected() });
-      }
 
-      if (!address) throw new Error("No address");
+      const accounts = (await window.ethereum.request({
+        method: "eth_requestAccounts",
+      })) as string[];
+
+      const userAddress = accounts[0];
+      setAddress(userAddress);
 
       const nonce = Math.random().toString(36).substring(2);
       const message = new SiweMessage({
         domain: window.location.host,
-        address,
+        address: userAddress,
         statement: "Sign in with Ethereum to Nexus",
         uri: window.location.origin,
         version: "1",
@@ -34,9 +47,10 @@ export function WalletButton() {
         nonce,
       });
 
-      const signature = await signMessageAsync({
-        message: message.prepareMessage(),
-      });
+      const signature = (await window.ethereum.request({
+        method: "personal_sign",
+        params: [message.prepareMessage(), userAddress],
+      })) as string;
 
       await signIn("credentials", {
         message: JSON.stringify(message),
@@ -48,7 +62,18 @@ export function WalletButton() {
     } finally {
       setLoading(false);
     }
-  }, [isConnected, connect, signMessageAsync, address]);
+  }, []);
+
+  if (status === "loading") {
+    return (
+      <button
+        disabled
+        className="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white opacity-50"
+      >
+        Loading...
+      </button>
+    );
+  }
 
   if (session?.user) {
     return (
@@ -57,7 +82,10 @@ export function WalletButton() {
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
         <button
-          onClick={() => { disconnect(); signOut(); }}
+          onClick={() => {
+            setAddress(null);
+            signOut();
+          }}
           className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
         >
           Disconnect

@@ -10,15 +10,16 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "next": "14.2.35",
     "next-auth": "^4.24.14",
+    "pg": "^8.21.0",
     "prisma": "^7.8.0",
     "react": "^18",
     "react-dom": "^18",
     "siwe": "^3.0.0",
-    "viem": "^2.51.0",
-    "wagmi": "^3.6.15"
+    "viem": "^2.51.0"
   },
   "devDependencies": {
     "@types/node": "^20",
