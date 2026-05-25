@@ -17,38 +17,50 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.message || !credentials?.signature) return null;
 
         try {
-          const siwe = new SiweMessage(credentials.message);
+          const siwe = new SiweMessage(JSON.parse(credentials.message));
           const result = await siwe.verify({
             signature: credentials.signature,
           });
 
-          if (result.success) {
-            // Find or create user
-            let user = await prisma.user.findFirst({
-              where: {
-                wallets: {
-                  some: { address: result.data.address },
-                },
-              },
-            });
+          if (!result.success) return null;
 
-            if (!user) {
-              user = await prisma.user.create({
-                data: {
-                  wallets: {
-                    create: {
-                      address: result.data.address,
-                      chainId: result.data.chainId,
-                      isPrimary: true,
-                    },
+          const address = result.data.address.toLowerCase();
+
+          // Find or create user
+          let user = await prisma.user.findFirst({
+            where: {
+              wallets: {
+                some: { address },
+              },
+            },
+            include: { wallets: true },
+          });
+
+          if (!user) {
+            user = await prisma.user.create({
+              data: {
+                wallets: {
+                  create: {
+                    address,
+                    chainId: result.data.chainId,
+                    isPrimary: true,
                   },
                 },
-              });
-            }
-
-            return { id: user.id, name: result.data.address };
+              },
+              include: { wallets: true },
+            });
           }
-          return null;
+
+          return {
+            id: user.id,
+            name: address,
+            wallets: user.wallets.map((w) => ({
+              id: w.id,
+              address: w.address,
+              chainId: w.chainId,
+              isPrimary: w.isPrimary,
+            })),
+          };
         } catch {
           return null;
         }
@@ -57,9 +69,31 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.wallets = ((
+          user as {
+            wallets?: Array<{
+              id: string;
+              address: string;
+              chainId: number;
+              isPrimary: boolean;
+            }>;
+          }
+        ).wallets || []) as NonNullable<typeof token.wallets>;
+      }
+      return token;
+    },
     async session({ session, token }) {
-      if (token.sub) (session.user as { id: string }).id = token.sub;
+      if (token) {
+        (session.user as { id: string }).id = token.id as string;
+        (session.user as { wallets: unknown[] }).wallets = (token.wallets as unknown[]) || [];
+      }
       return session;
     },
+  },
+  pages: {
+    signIn: "/",
   },
 };
