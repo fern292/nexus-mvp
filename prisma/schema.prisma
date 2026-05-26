@@ -17,6 +17,7 @@ model User {
 
   wallets       Wallet[]
   alerts        Alert[]
+  notifications Notification[]
   snapshots     PortfolioSnapshot[]
   accounts      Account[]
   sessions      Session[]
@@ -56,6 +57,7 @@ model Asset {
   lastUpdated DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  alerts      Alert[]
 
   @@index([walletId])
   @@index([contract])
@@ -68,26 +70,37 @@ enum AssetType {
 }
 
 model Alert {
-  id        String      @id @default(cuid())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      AlertType
-  condition Json
-  isActive  Boolean     @default(true)
-  triggeredAt DateTime?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id            String              @id @default(cuid())
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          AlertType
+  assetId       String?
+  asset         Asset?              @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  threshold     Decimal?            @db.Decimal(36, 18)
+  channel       NotificationChannel @default(INAPP)
+  condition     Json?
+  isActive      Boolean             @default(true)
+  triggeredAt   DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  notifications Notification[]
 
   @@index([userId])
   @@index([type])
+  @@index([assetId])
 }
 
 enum AlertType {
   PRICE_ABOVE
   PRICE_BELOW
-  BALANCE_CHANGE
-  NFT_LISTED
-  NFT_SOLD
+  NEW_ASSET
+  VALUE_DROP
+}
+
+enum NotificationChannel {
+  EMAIL
+  DISCORD
+  INAPP
 }
 
 model PortfolioSnapshot {
@@ -139,4 +152,22 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alertId   String?
+  alert     Alert?    @relation(fields: [alertId], references: [id], onDelete: SetNull)
+  title     String
+  message   String
+  channel   NotificationChannel
+  read      Boolean   @default(false)
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
 }
