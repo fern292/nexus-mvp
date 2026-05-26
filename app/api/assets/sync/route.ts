@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     if (targetAddress) {
       const found = userWallets.find(
         (w: { id: string; address: string }) =>
-          w.address.toLowerCase() === targetAddress.toLowerCase(),
+          w.address.toLowerCase() === targetAddress.toLowerCase()
       );
       if (!found) {
         return NextResponse.json(
