@@ -255,7 +255,9 @@ export async function checkAllAlerts(userId?: string): Promise<CheckResult[]> {
     ...(userId ? { userId } : {}),
   };
 
-  const alerts = await prisma.alert.findMany({
+  const alerts: Array<Alert & {
+    asset: { contract: string; symbol: string | null; name: string | null; balance: string; chainId: number } | null;
+  }> = await prisma.alert.findMany({
     where,
     include: {
       asset: {
