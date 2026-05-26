@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Filter to specific wallet if requested
     let walletsToSync = userWallets;
     if (targetWalletId) {
-      const found = userWallets.find((w) => w.id === targetWalletId);
+      const found = userWallets.find((w: { id: string }) => w.id === targetWalletId);
       if (!found) {
         return NextResponse.json(
           {
