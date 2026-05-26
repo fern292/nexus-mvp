@@ -32,7 +32,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ activities: [] });
     }
 
-    const assets = await prisma.asset.findMany({
+    const assets: Array<{
+      id: string;
+      name: string | null;
+      symbol: string | null;
+      type: string;
+      contract: string;
+      lastUpdated: Date;
+      createdAt: Date;
+    }> = await prisma.asset.findMany({
       where: { walletId: { in: walletIds } },
       orderBy: { lastUpdated: "desc" },
       take: limit,

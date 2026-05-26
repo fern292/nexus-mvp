@@ -30,10 +30,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ byType: [], byChain: [], byContract: [] });
     }
 
-    const assets = await prisma.asset.findMany({
-      where: { walletId: { in: walletIds } },
-      select: { type: true, chainId: true, contract: true },
-    });
+    const selectAlloc = {
+      type: true,
+      chainId: true,
+      contract: true,
+    } as const;
+
+    const assets: Array<{ type: string; chainId: number; contract: string }> =
+      await prisma.asset.findMany({
+        where: { walletId: { in: walletIds } },
+        select: selectAlloc,
+      });
 
     // Allocation by type
     const typeMap = new Map<string, number>();
