@@ -54,12 +54,14 @@ export const authOptions: NextAuthOptions = {
           return {
             id: user.id,
             name: address,
-            wallets: user.wallets.map((w) => ({
-              id: w.id,
-              address: w.address,
-              chainId: w.chainId,
-              isPrimary: w.isPrimary,
-            })),
+            wallets: user.wallets.map(
+              (w: { id: string; address: string; chainId: number; isPrimary: boolean }) => ({
+                id: w.id,
+                address: w.address,
+                chainId: w.chainId,
+                isPrimary: w.isPrimary,
+              })
+            ),
           };
         } catch {
           return null;

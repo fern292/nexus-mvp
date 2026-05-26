@@ -155,9 +155,11 @@ export class AssetIndexer {
       }
 
       // Get existing assets for this wallet
-      const existingAssets = await prisma.asset.findMany({
-        where: { walletId },
-      });
+      const existingAssets: Array<{ id: string; tokenId: string | null; contract: string }> =
+        await prisma.asset.findMany({
+          where: { walletId },
+          select: { id: true, tokenId: true, contract: true },
+        });
       const existingIds = new Set(existingAssets.map((a) => a.tokenId ?? a.contract));
 
       // Track which tokens we've processed
