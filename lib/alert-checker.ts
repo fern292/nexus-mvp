@@ -1,5 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import type { Alert } from "@prisma/client";
+// Prisma 7 doesn't export model types from @prisma/client in Vercel builds
+type Alert = {
+  id: string;
+  userId: string;
+  type: AlertType;
+  assetId: string | null;
+  threshold: { toString: () => string } | null;
+  channel: NotificationChannel;
+  condition: unknown;
+  isActive: boolean;
+  triggeredAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 type AlertType = "PRICE_ABOVE" | "PRICE_BELOW" | "NEW_ASSET" | "VALUE_DROP";
 type NotificationChannel = "EMAIL" | "DISCORD" | "INAPP";
 
