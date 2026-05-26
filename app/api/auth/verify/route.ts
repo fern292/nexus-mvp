@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Add wallet if it doesn't exist for this user
       const existingWallet = user.wallets.find(
-        (w) => w.address.toLowerCase() === normalizedAddress
+        (w: { address: string }) => w.address.toLowerCase() === normalizedAddress
       );
       if (!existingWallet) {
         await prisma.wallet.create({

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       where: { userId },
       select: { id: true },
     });
-    const walletIds = userWallets.map((w) => w.id);
+    const walletIds = userWallets.map((w: { id: string }) => w.id);
 
     if (walletIds.length === 0) {
       return NextResponse.json({ activities: [] });
