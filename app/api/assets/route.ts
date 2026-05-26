@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       where: { userId },
       select: { id: true },
     });
-    const walletIds = userWallets.map((w) => w.id);
+    const walletIds = userWallets.map((w: { id: string }) => w.id);
     where.walletId = { in: walletIds };
 
     // Optional filters
