@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import type { Alert, AlertType, NotificationChannel } from "@prisma/client";
+import type { Alert } from "@prisma/client";
+type AlertType = "PRICE_ABOVE" | "PRICE_BELOW" | "NEW_ASSET" | "VALUE_DROP";
+type NotificationChannel = "EMAIL" | "DISCORD" | "INAPP";
 
 const COINGECKO_BASE = "https://api.coingecko.com/api/v3";
 

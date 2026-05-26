@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkAllAlerts } from "@/lib/alert-checker";
-import type { AlertType, NotificationChannel } from "@prisma/client";
+type AlertType = "PRICE_ABOVE" | "PRICE_BELOW" | "NEW_ASSET" | "VALUE_DROP";
+type NotificationChannel = "EMAIL" | "DISCORD" | "INAPP";
 
 /**
  * GET /api/alerts
